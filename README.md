@@ -7,7 +7,6 @@ A simple PowerShell script to quickly scaffold .NET solutions with Clean Archite
 - Clean Architecture structure (Domain, Application, Infrastructure, API layers)
 - Interactive setup with sensible defaults
 - Minimal API or Controllers
-- Optional Entity Framework Core
 - Optional xUnit tests
 - Flat or grouped folder structure
 - .sln or .slnx solution formats

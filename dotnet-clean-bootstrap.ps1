@@ -1,12 +1,12 @@
 ﻿#!/usr/bin/env pwsh
 # =========================================
-#   .NET Clean Architecture Bootstrap (Basic)
+#   .NET Clean Architecture Bootstrap
 #   Author: Vijay Bhatter
 #   Version: 1.0.0
 #   Features:
 #     - Safety overwrite check
-#     - Defaults: Minimal API + EF=yes + Tests=no
-#     - .github/copilot-instructions.md (with your Goal for Copilot)
+#     - Defaults: Minimal API + Tests=no
+#     - .github/copilot-instructions.md
 #     - Multilingual/emoji-safe .editorconfig
 #     - Git init + first commit
 #     - Interactive .NET version selection
@@ -16,7 +16,6 @@
 param(
     [string]$Name,
     [switch]$Controllers,
-    [switch]$NoEF,
     [switch]$Tests,
     [string]$DotNetVersion,
     [ValidateSet('sln', 'slnx')]
@@ -33,7 +32,6 @@ Write-Host ""
 # --- Defaults ---
 $SOLUTION_NAME = $Name
 $API_TYPE = if ($Controllers) { "Controllers" } else { "Minimal" }
-$INCLUDE_EF = if ($NoEF) { "n" } else { "y" }
 $INCLUDE_TESTS = if ($Tests) { "y" } else { "n" }
 
 # --- Name ---
@@ -194,11 +192,6 @@ if (-not [string]::IsNullOrWhiteSpace($apiInput)) {
 }
 $API_TYPE = (Get-Culture).TextInfo.ToTitleCase($API_TYPE.ToLower())
 
-$efInput = Read-Host "Include Entity Framework? (y/n, default: $INCLUDE_EF)"
-if (-not [string]::IsNullOrWhiteSpace($efInput)) {
-    $INCLUDE_EF = $efInput
-}
-
 $testsInput = Read-Host "Include Test Project? (y/n, default: $INCLUDE_TESTS)"
 if (-not [string]::IsNullOrWhiteSpace($testsInput)) {
     $INCLUDE_TESTS = $testsInput
@@ -212,7 +205,6 @@ Write-Host "  .NET:        $DOTNET_MAJOR"
 Write-Host "  Solution:    .$SOLUTION_FORMAT"
 Write-Host "  Structure:   $FOLDER_STRUCTURE"
 Write-Host "  API:         $API_TYPE"
-Write-Host "  EF:          $INCLUDE_EF"
 Write-Host "  Tests:       $INCLUDE_TESTS"
 Write-Host ""
 
@@ -314,14 +306,6 @@ if ($INCLUDE_TESTS -ieq "y") {
     dotnet sln "$ROOT_DIR/$SOLUTION_NAME.$SOLUTION_FORMAT" add "$SOLUTION_NAME.UnitTests/$SOLUTION_NAME.UnitTests.csproj"
 }
 
-# --- EF (optional) ---
-if ($INCLUDE_EF -ieq "y") {
-    Write-Host "🗃️  Adding EF Core packages..." -ForegroundColor Cyan
-    Set-Location "$ROOT_DIR/$INFRASTRUCTURE_PATH"
-    dotnet add package Microsoft.EntityFrameworkCore.Sqlite
-    dotnet add package Microsoft.EntityFrameworkCore.Design
-}
-
 # --- Root files ---
 Set-Location $ROOT_DIR
 dotnet new gitignore
@@ -410,7 +394,6 @@ src/
 
 ## Defaults
 API Type: $API_TYPE
-EF Core: $INCLUDE_EF
 Tests: $INCLUDE_TESTS
 API docs (Swagger/Redoc/Scalar) are not included by default; add later as needed.
 
@@ -509,7 +492,6 @@ src/
 
 - [.NET $DOTNET_MAJOR SDK](https://dotnet.microsoft.com/download/dotnet/$DOTNET_MAJOR)
 - [Visual Studio Code](https://code.visualstudio.com/) or [Visual Studio 2022](https://visualstudio.microsoft.com/)
-$(if ($INCLUDE_EF -ieq "y") { "- [SQLite](https://www.sqlite.org/) (included with EF Core)" } else { "" })
 
 ### Running the Application
 
@@ -605,7 +587,6 @@ $(if ($INCLUDE_TESTS -ieq "y") { @"
 
 - **.NET $DOTNET_MAJOR**: Latest LTS runtime
 - **ASP.NET Core**: $(if ($API_TYPE -ieq "Minimal") { "Minimal APIs" } else { "Web API with Controllers" })
-$(if ($INCLUDE_EF -ieq "y") { "- **Entity Framework Core**: SQLite for development" } else { "" })
 $(if ($INCLUDE_TESTS -ieq "y") { "- **xUnit**: Testing framework" } else { "" })
 - **Clean Architecture**: Dependency inversion & separation of concerns
 
@@ -635,35 +616,6 @@ cd src/$SOLUTION_NAME.Api
 dotnet user-secrets init
 dotnet user-secrets set "ApiKey" "your-secret-key"
 ``````
-
-$(if ($INCLUDE_EF -ieq "y") { @"
-## 📊 Database
-
-### Migrations
-
-``````bash
-# Add a new migration
-dotnet ef migrations add InitialCreate --project $INFRASTRUCTURE_PATH --startup-project $API_PATH
-
-# Update database
-dotnet ef database update --project $INFRASTRUCTURE_PATH --startup-project $API_PATH
-
-# Remove last migration
-dotnet ef migrations remove --project $INFRASTRUCTURE_PATH --startup-project $API_PATH
-``````
-
-### Connection String
-
-The default SQLite connection string is in ``appsettings.json``:
-
-``````json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Data Source=$SOLUTION_NAME.db"
-  }
-}
-``````
-"@ } else { "" })
 
 ## 📝 Development Workflow
 
